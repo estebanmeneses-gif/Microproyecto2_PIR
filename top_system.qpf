@@ -1,0 +1,4 @@
+# Proyecto Quartus II - Microproyecto 2: Registro de presencia PIR + ROM/RAM
+QUARTUS_VERSION = "13.0"
+DATE = "10:00:00  October 28, 2026"
+PROJECT_REVISION = "top_system"
