@@ -1,0 +1,73 @@
+# Reading C:/altera/13.1/modelsim_ase/tcl/vsim/pref.tcl 
+cd C:/Users/Usuario/Documents/Microproyecto2_PIR
+do sim/run_modelsim.do
+# Model Technology ModelSim ALTERA vcom 10.1d Compiler 2012.11 Nov  2 2012
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Compiling package pkg_system
+# -- Compiling package body pkg_system
+# -- Loading package pkg_system
+# -- Compiling entity reset_sync
+# -- Compiling architecture rtl of reset_sync
+# -- Loading package pkg_system
+# -- Compiling entity pir_controller
+# -- Compiling architecture rtl of pir_controller
+# -- Compiling entity rom_memory
+# -- Compiling architecture rtl of rom_memory
+# -- Compiling entity ram_memory
+# -- Compiling architecture rtl of ram_memory
+# -- Compiling entity control_unit
+# -- Compiling architecture rtl of control_unit
+# -- Compiling entity hex7seg
+# -- Compiling architecture rtl of hex7seg
+# -- Compiling entity display_unit
+# -- Compiling architecture rtl of display_unit
+# -- Loading entity hex7seg
+# -- Compiling entity top_system
+# -- Compiling architecture structural of top_system
+# -- Loading entity reset_sync
+# -- Loading entity pir_controller
+# -- Loading entity control_unit
+# -- Loading entity rom_memory
+# -- Loading entity ram_memory
+# -- Loading entity display_unit
+# -- Compiling entity tb_top_system
+# -- Compiling architecture sim of tb_top_system
+# -- Loading entity top_system
+# vsim -t ns work.tb_top_system 
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.pkg_system(body)
+# Loading work.tb_top_system(sim)
+# Loading work.top_system(structural)
+# Loading work.reset_sync(rtl)
+# Loading work.pir_controller(rtl)
+# Loading work.control_unit(rtl)
+# Loading work.rom_memory(rtl)
+# Loading work.ram_memory(rtl)
+# Loading work.display_unit(rtl)
+# Loading work.hex7seg(rtl)
+# ** Note: T1: reset inicial
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T2: rafaga de rebotes/glitches en pir_in
+#    Time: 190 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T3: 5 detecciones validas
+#    Time: 3630 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T4: PIR sostenido en alto
+#    Time: 16430 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T5: recorrido de la RAM en modo consulta
+#    Time: 30510 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T6: llenado de las 16 posiciones
+#    Time: 30930 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: T7: reset en mitad del funcionamiento
+#    Time: 59090 ns  Iteration: 0  Instance: /tb_top_system
+# ** Note: RESULTADO: TODAS LAS PRUEBAS PASARON (0 errores)
+#    Time: 65850 ns  Iteration: 0  Instance: /tb_top_system
+# 0 ns
+# 69153 ns
+
+write transcript sim/out/modelsim_transcript.txt

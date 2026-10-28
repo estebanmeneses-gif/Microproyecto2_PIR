@@ -1,0 +1,10 @@
+../tb_pir_controller.vhd:93:5:@2670ns:(report note): Latencia entrada->pulso = 15 ciclos
+../tb_pir_controller.vhd:120:7:@6730ns:(report note): RESULTADO tb_pir_controller: TODAS LAS PRUEBAS PASARON
+../tb_top_system.vhd:151:5:@0ms:(report note): T1: reset inicial
+../tb_top_system.vhd:161:5:@190ns:(report note): T2: rafaga de rebotes/glitches en pir_in
+../tb_top_system.vhd:169:5:@3630ns:(report note): T3: 5 detecciones validas
+../tb_top_system.vhd:180:5:@16430ns:(report note): T4: PIR sostenido en alto
+../tb_top_system.vhd:192:5:@30510ns:(report note): T5: recorrido de la RAM en modo consulta
+../tb_top_system.vhd:207:5:@30930ns:(report note): T6: llenado de las 16 posiciones
+../tb_top_system.vhd:221:5:@59090ns:(report note): T7: reset en mitad del funcionamiento
+../tb_top_system.vhd:240:7:@65850ns:(report note): RESULTADO: TODAS LAS PRUEBAS PASARON (0 errores)
