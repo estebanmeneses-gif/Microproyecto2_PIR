@@ -1,0 +1,22 @@
+# Archivos generados por Quartus / ModelSim / GHDL
+db/
+incremental_db/
+output_files/
+simulation/
+greybox_tmp/
+*.qws
+*.bak
+*.rpt
+*.summary
+*.smsg
+*.done
+*.jdi
+*.pin
+*.sof
+*.pof
+*.qdf
+transcript
+work/
+sim/out/*.cf
+sim/out/*.vcd
+*.wlf
