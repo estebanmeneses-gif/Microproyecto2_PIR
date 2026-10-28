@@ -1,0 +1,42 @@
+digraph G {
+  rankdir=LR; splines=spline; nodesep=0.45; ranksep=0.7;
+  fontname="Helvetica"; node [fontname="Helvetica", fontsize=11]; edge [fontname="Helvetica", fontsize=9, color="#334155"];
+  labelloc=t; label=<<b>Diagrama de bloques — Sistema de Registro de Presencia (ROM/RAM + PIR)</b><br/><font point-size="10">Tarjeta DE0 · Cyclone III EP3C16F484C6 · un solo reloj de 50 MHz</font>>;
+
+  subgraph cluster_ext_in { label="Entradas físicas"; style="rounded,dashed"; color="#94a3b8"; fontsize=10;
+    osc [label="Oscilador 50 MHz\nCLOCK_50 (PIN_G21)", shape=box, style="rounded,filled", fillcolor="#e2e8f0"];
+    btn [label="Pulsador BUTTON0\n(PIN_H2, activo bajo)", shape=box, style="rounded,filled", fillcolor="#e2e8f0"];
+    pir [label="Sensor PIR HC-SR501\nOUT → GPIO0_D0 (PIN_AB16)\nJ4 pin 2", shape=box, style="rounded,filled", fillcolor="#fde68a"];
+    sws [label="Interruptores\nSW9 = modo consulta\nSW3..SW0 = dirección", shape=box, style="rounded,filled", fillcolor="#e2e8f0"];
+  }
+
+  subgraph cluster_fpga { label=<<b>FPGA — top_system.vhd (estructural)</b>>; style="rounded,filled"; fillcolor="#f8fafc"; color="#0f172a"; penwidth=1.6; labelloc=b;
+    pkg [label="pkg_system.vhd\nDATA_WIDTH=8 · ADDR_WIDTH=4\nrom_array_t · ram_array_t\nhex_to_7seg()", shape=note, style=filled, fillcolor="#ede9fe", fontsize=9];
+    rs  [label="reset_sync\n(2 FF, invierte\npolaridad)\nrst → todos los bloques", shape=box, style="rounded,filled", fillcolor="#e0f2fe"];
+    pc  [label=<<b>pir_controller</b><br/><font point-size="9">Sincronizador 3 FF<br/>→ Filtro 20 ms (anti-rebote)<br/>→ Detector de flanco</font>>, shape=box, style="rounded,filled", fillcolor="#fef3c7"];
+    cu  [label=<<b>control_unit (FSM Moore)</b><br/><font point-size="9">IDLE → READ_ROM → WAIT_ROM<br/>→ WRITE_RAM → INC_ADDR<br/>punteros rom_ptr / wr_ptr</font>>, shape=box, style="rounded,filled", fillcolor="#dcfce7", penwidth=1.5];
+    rom [label=<<b>rom_memory</b><br/><font point-size="9">16 × 8 síncrona<br/>códigos A1, B2 … 90</font>>, shape=box3d, style=filled, fillcolor="#fee2e2"];
+    ram [label=<<b>ram_memory</b><br/><font point-size="9">16 × 8 síncrona<br/>1 puerto escritura<br/>1 puerto lectura</font>>, shape=box3d, style=filled, fillcolor="#dbeafe"];
+    du  [label=<<b>display_unit</b><br/><font point-size="9">MUX dirección (vivo/consulta)<br/>4 × hex7seg · LEDs<br/>estirador de pulso</font>>, shape=box, style="rounded,filled", fillcolor="#f1f5f9"];
+  }
+
+  subgraph cluster_ext_out { label="Salidas físicas"; style="rounded,dashed"; color="#94a3b8"; fontsize=10;
+    hex [label="Displays 7 seg\nHEX3 = dirección\nHEX2 = estado FSM\nHEX1:HEX0 = dato", shape=box, style="rounded,filled", fillcolor="#e2e8f0"];
+    leds [label="LEDG0 PIR · LEDG1 evento\nLEDG2 RAM llena · LEDG3 consulta\nLEDG9..4 contador", shape=box, style="rounded,filled", fillcolor="#e2e8f0"];
+  }
+
+  osc -> rs [label="clk"]; btn -> rs [label="rst_n"];
+  pir -> pc [label="pir_in (3.3 V)"];
+  rs -> pc [label="rst"]; rs -> cu [label="rst"];
+  pc -> cu [label="pir_pulse", penwidth=1.6, color="#b45309"];
+  pc -> du [label="pir_level / pir_pulse"];
+  cu -> rom [label="rom_en, rom_addr[3:0]"];
+  rom -> cu [label="rom_data[7:0]"];
+  cu -> ram [label="ram_we, wr_addr[3:0], data[7:0]", penwidth=1.6, color="#1d4ed8"];
+  cu -> du [label="last_addr, has_data, ram_full,\nevent_count, state_code"];
+  du -> ram [label="rd_addr[3:0]"];
+  ram -> du [label="rd_data[7:0]"];
+  sws -> du [label="SW9, SW3..0"];
+  du -> hex [label="HEX0..3[6:0]"]; du -> leds [label="LEDG[9:0]"];
+  pkg -> cu [style=dotted, arrowhead=none, color="#7c3aed"];
+}

@@ -1,0 +1,11 @@
+digraph FSM {
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", shape=circle, style=filled, fillcolor="#dcfce7", fixedsize=true, width=1.45, fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  labelloc=t; label=<<b>FSM de control_unit (Moore)</b><br/><font point-size="9">Salidas: rom_en='1' solo en READ_ROM · ram_we='1' solo en WRITE_RAM</font>>;
+  start [shape=point, width=0.12];
+  IDLE [label="S_IDLE\n(0)", shape=doublecircle, width=1.35];
+  RR [label="S_READ_ROM\n(1)\nrom_en=1"]; WR [label="S_WAIT_ROM\n(2)\ndata_reg←rom"]; WM [label="S_WRITE_RAM\n(3)\nram_we=1"]; INC [label="S_INC_ADDR\n(4)\nptr+1"];
+  start -> IDLE [label="rst='1'"];
+  IDLE -> IDLE [label="pir_pulse='0'"];
+  IDLE -> RR [label="pir_pulse='1'"];
+  RR -> WR; WR -> WM; WM -> INC; INC -> IDLE [label="siempre"];
+}
