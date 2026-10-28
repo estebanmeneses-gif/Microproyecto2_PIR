@@ -97,45 +97,51 @@ pkg_system (paquete usado por todos) ...... rtl/pkg_system.vhd
 
 # Arquitectura del sistema
 
-![Diagrama de bloques](docs/diagramas/diagrama_bloques.png)
-
 ```mermaid
-graph LR
+%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
+graph TD
 
-    CLOCK_50["CLOCK_50 50 MHz"]
-    BTN["BUTTON0 Reset"]
+    CLOCK_50["CLOCK_50<br/>50MHz"]
+    KEY["BUTTON0 Reset"]
     PIR["Sensor PIR HC-SR501<br/>GPIO0_D0"]
-    SW["SW9 modo / SW3..0 dirección"]
 
     RST["reset_sync"]
-    PIRC["pir_controller<br/>sync 3 FF + filtro + flanco"]
-    FSM["control_unit<br/>FSM Moore"]
-    ROM["rom_memory<br/>16x8"]
-    RAM["ram_memory<br/>16x8"]
+    PIRC["pir_controller<br/>Sync 3 FF + Filtro 20 ms + Flanco"]
+    FSM["FSM Controlador<br/>control_unit"]
+    ROM["ROM Síncrona 16x8"]
+    RAM["RAM Síncrona 16x8"]
+    SW["SW Selector<br/>SW9 / SW3..0"]
     DISP["display_unit"]
 
     HEX["HEX3..HEX0"]
-    LED["LEDG9..0"]
+    LED["LEDG9..LEDG0"]
 
-    BTN --> RST
     CLOCK_50 --> RST
-    RST -->|rst| PIRC
+    KEY --> RST
     RST -->|rst| FSM
     PIR -->|pir_in| PIRC
     PIRC -->|pir_pulse| FSM
 
-    FSM -->|rom_en rom_addr| ROM
+    FSM -->|rom_addr rom_en| ROM
     ROM -->|rom_data| FSM
 
-    FSM -->|ram_we wr_addr data| RAM
-    DISP -->|rd_addr| RAM
+    FSM -->|ram_addr ram_we ram_data| RAM
     RAM -->|rd_data| DISP
+    DISP -->|rd_addr| RAM
 
-    FSM -->|last_addr estado contador| DISP
+    FSM -->|last_addr state_code| DISP
     SW --> DISP
+
     DISP --> HEX
     DISP --> LED
 ```
+
+<details>
+<summary>Diagrama de bloques detallado (con pines de la DE0)</summary>
+
+![Diagrama de bloques](docs/diagramas/diagrama_bloques.png)
+
+</details>
 
 ---
 
@@ -166,13 +172,13 @@ stateDiagram-v2
 
     S_IDLE --> S_READ_ROM : pir_pulse = '1'
 
-    S_READ_ROM --> S_WAIT_ROM
+    S_READ_ROM --> S_WAIT_ROM : rom_en = '1'
 
-    S_WAIT_ROM --> S_WRITE_RAM
+    S_WAIT_ROM --> S_WRITE_RAM : data_reg ← rom_data
 
-    S_WRITE_RAM --> S_INC_ADDR
+    S_WRITE_RAM --> S_INC_ADDR : ram_we = '1'
 
-    S_INC_ADDR --> S_IDLE
+    S_INC_ADDR --> S_IDLE : rom_ptr+1, wr_ptr+1
 ```
 
 ---

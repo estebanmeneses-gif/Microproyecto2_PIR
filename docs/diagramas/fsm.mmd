@@ -1,0 +1,15 @@
+stateDiagram-v2
+
+    [*] --> S_IDLE : rst = '1'
+
+    S_IDLE --> S_IDLE : pir_pulse = '0'
+
+    S_IDLE --> S_READ_ROM : pir_pulse = '1'
+
+    S_READ_ROM --> S_WAIT_ROM : rom_en = '1'
+
+    S_WAIT_ROM --> S_WRITE_RAM : data_reg ← rom_data
+
+    S_WRITE_RAM --> S_INC_ADDR : ram_we = '1'
+
+    S_INC_ADDR --> S_IDLE : rom_ptr+1, wr_ptr+1
