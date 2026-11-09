@@ -1,7 +1,7 @@
 # Sistema de Registro de Presencia con Memorias ROM/RAM y Sensor PIR en VHDL
 
 **Universidad del Cauca**  
-**Autor:** Esteban Meneses - Santiago Cordoba(estebanmeneses-git)  
+**Autor:** Esteban Meneses - Santiago Cordoba
 **Fecha:** Octubre 2026  
 **Microproyecto 2**
 
