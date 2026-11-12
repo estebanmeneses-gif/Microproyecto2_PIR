@@ -1,69 +1,56 @@
--- =============================================================================
--- Archivo      : top_system.vhd
--- Proyecto     : Microproyecto 2 - Registro de Presencia con ROM/RAM y sensor PIR
--- Tarjeta      : Terasic DE0 - Cyclone III EP3C16F484C6
---
--- Descripcion  :
---   Entidad de nivel superior (puramente ESTRUCTURAL). Interconecta:
---     reset_sync -> pir_controller -> control_unit <-> rom_memory
---                                                  <-> ram_memory
---                                     display_unit <-> ram_memory (lectura)
---   y los pines fisicos de la tarjeta.
---
---   Pines (ver top_system.qsf):
---     clk     : CLOCK_50  (PIN_G21)  oscilador principal de 50 MHz
---     rst_n   : BUTTON0   (PIN_H2)   pulsador, activo en BAJO
---     pir_in  : GPIO0_D0  (PIN_AB16) header GPIO0 (J4) pin 2
---     SW(9)   : modo consulta, SW(3..0): direccion a consultar
---     HEX0..3 : displays de 7 segmentos (activos en bajo)
---     LEDG    : indicadores
---
---   Todo el sistema trabaja con el MISMO reloj de 50 MHz (sin relojes
---   derivados) y con reset sincrono.
--- =============================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.pkg_system.all;
 
+--SISTEMA DE REGISTRO DE PRESENCIA CON SENSOR PIR
+
+-----------------------------------ENTITY-------------------------------------
 entity top_system is
   generic (
-    G_FILTER_CYCLES  : positive := PIR_FILTER_CYCLES;   -- 20 ms (se reduce en simulacion)
-    G_STRETCH_CYCLES : positive := LED_STRETCH_CYCLES   -- 250 ms (se reduce en simulacion)
+    G_FILTER_CYCLES  : positive := PIR_FILTER_CYCLES;   -- 20 ms 
+    G_STRETCH_CYCLES : positive := LED_STRETCH_CYCLES   -- 250 ms
   );
   port (
+      -- ENTRADAS
     clk     : in  std_logic;                     -- CLOCK_50
-    rst_n   : in  std_logic;                     -- BUTTON0 (activo en bajo)
-    pir_in  : in  std_logic;                     -- Sensor PIR HC-SR501 (GPIO0_D0)
-    SW      : in  std_logic_vector(9 downto 0);  -- Interruptores
-    HEX0_D  : out std_logic_vector(6 downto 0);
-    HEX1_D  : out std_logic_vector(6 downto 0);
-    HEX2_D  : out std_logic_vector(6 downto 0);
-    HEX3_D  : out std_logic_vector(6 downto 0);
-    HEX0_DP : out std_logic;
-    HEX1_DP : out std_logic;
-    HEX2_DP : out std_logic;
-    HEX3_DP : out std_logic;
-    LEDG    : out std_logic_vector(9 downto 0)
+    rst_n   : in  std_logic;                     -- BUTTON 0 
+    pir_in  : in  std_logic;                     -- Sensor PIR HC-SR501 
+    SW      : in  std_logic_vector(9 downto 0);  -- Interruptores 
+	 
+	  -- SALIDAS
+    HEX0_D  : out std_logic_vector(6 downto 0);  -- Display 0 
+    HEX1_D  : out std_logic_vector(6 downto 0);  -- Display 1
+    HEX2_D  : out std_logic_vector(6 downto 0);  -- Display 2
+    HEX3_D  : out std_logic_vector(6 downto 0);  -- Display 3
+    HEX0_DP : out std_logic;                     -- Puntos decimales
+    HEX1_DP : out std_logic;                     -- Puntos decimales
+    HEX2_DP : out std_logic;                     -- Puntos decimales
+    HEX3_DP : out std_logic;                     -- Puntos decimales
+    LEDG    : out std_logic_vector(9 downto 0)   -- LEDS
+   
   );
 end entity top_system;
+---------------------------------------------------------------------------------------
 
+---------------------------------ARCHITECTURE------------------------------------------
 architecture structural of top_system is
 
-  signal rst         : std_logic;
-  signal pir_level   : std_logic;
-  signal pir_pulse   : std_logic;
+  signal rst         : std_logic;   -- reset interno
+  signal pir_level   : std_logic;   -- existe presencia 
+  signal pir_pulse   : std_logic;   -- pulso de un ciclo por cada movimiento nuevo
 
-  signal rom_en      : std_logic;
-  signal rom_addr    : addr_t;
-  signal rom_data    : data_t;
+  signal rom_en      : std_logic;   -- permiso de lectura de la ROM
+  signal rom_addr    : addr_t;      -- casilla de la ROM a leer
+  signal rom_data    : data_t;      -- codigo que entrega la ROM
 
-  signal ram_we      : std_logic;
-  signal ram_wr_addr : addr_t;
-  signal ram_wr_data : data_t;
-  signal ram_rd_addr : addr_t;
-  signal ram_rd_data : data_t;
+  signal ram_we      : std_logic;   -- permiso de escritura en la RAM
+  signal ram_wr_addr : addr_t;      -- casilla de la RAM donde se escribe
+  signal ram_wr_data : data_t;      -- dato que se escribe
+  signal ram_rd_addr : addr_t;      -- casilla de la RAM que se quiere leer
+  signal ram_rd_data : data_t;      -- dato leido de la RAM
 
+  -- Informacion de la FSM para los displays y LEDS
   signal last_addr   : addr_t;
   signal has_data    : std_logic;
   signal ram_full    : std_logic;
@@ -72,11 +59,12 @@ architecture structural of top_system is
 
 begin
 
-  -- Reset: pulsador activo en bajo -> reset interno sincrono activo en alto
+  -- Reset
   u_rst : entity work.reset_sync
     port map (clk => clk, rst_n => rst_n, rst => rst);
 
   -- Acondicionamiento del sensor PIR
+  -- Sincroniza y filtra la senal
   u_pir : entity work.pir_controller
     generic map (G_SYNC_STAGES => SYNC_STAGES, G_FILTER_CYCLES => G_FILTER_CYCLES)
     port map (
@@ -88,6 +76,7 @@ begin
     );
 
   -- Unidad de control (FSM)
+  -- Lee la ROM guarda en la RAM y avanza la direccion
   u_ctrl : entity work.control_unit
     port map (
       clk         => clk,
@@ -106,49 +95,53 @@ begin
       state_code  => state_code
     );
 
-  -- Memoria ROM de codigos
-  u_rom : entity work.rom_memory
-    port map (clk => clk, en => rom_en, addr => rom_addr, data_out => rom_data);
+   -- Memoria ROM de codigos
+  -- Entrega el codigo que le pide la FSM
+  u_rom : entity work.rom_memory                                                  -- Crea la ROM dentro del sistema
+    port map (clk => clk, en => rom_en, addr => rom_addr, data_out => rom_data);  -- clk: reloj 
 
   -- Memoria RAM de eventos
-  u_ram : entity work.ram_memory
+  -- Guarda los codigos 
+  u_ram : entity work.ram_memory     -- Crea la RAM dentro del sistema
     port map (
-      clk      => clk,
-      we       => ram_we,
-      wr_addr  => ram_wr_addr,
-      data_in  => ram_wr_data,
-      rd_addr  => ram_rd_addr,
-      data_out => ram_rd_data
+      clk      => clk,               -- Reloj del sistema
+      we       => ram_we,            -- Permiso de escritura que da la FSM
+      wr_addr  => ram_wr_addr,       -- Casilla donde se va a escribir
+      data_in  => ram_wr_data,       -- Dato que se va a guardar
+      rd_addr  => ram_rd_addr,       -- Casilla que el display quiere leer
+      data_out => ram_rd_data        -- Dato leido que le llega al display
     );
 
   -- Lectura y visualizacion
-  u_disp : entity work.display_unit
-    generic map (G_STRETCH_CYCLES => G_STRETCH_CYCLES)
+  -- Lee la RAM, muestra datos y LEDS
+  u_disp : entity work.display_unit                   -- Maneja displays y LEDS
+    generic map (G_STRETCH_CYCLES => G_STRETCH_CYCLES) -- Tiempo que queda prendido el LED
     port map (
-      clk         => clk,
-      rst         => rst,
-      view_mode   => SW(9),
-      sw_addr     => SW(3 downto 0),
-      last_addr   => last_addr,
-      has_data    => has_data,
-      ram_full    => ram_full,
-      event_count => event_count,
-      state_code  => state_code,
-      pir_level   => pir_level,
-      pir_pulse   => pir_pulse,
-      ram_rd_addr => ram_rd_addr,
-      ram_rd_data => ram_rd_data,
-      hex0        => HEX0_D,
-      hex1        => HEX1_D,
-      hex2        => HEX2_D,
-      hex3        => HEX3_D,
-      ledg        => LEDG
+      clk         => clk,             -- Reloj
+      rst         => rst,             -- Reset interno
+      view_mode   => SW(9),           -- Switch 9
+      sw_addr     => SW(3 downto 0),  -- Switches 3 a 0
+      last_addr   => last_addr,       -- Ultima casilla escrita
+      has_data    => has_data,        -- Avisa si ya hay algo guardado
+      ram_full    => ram_full,        -- Avisa si ya se llenaron las 16 casillas
+      event_count => event_count,     -- Cantidad de detecciones
+      state_code  => state_code,      -- Numero del estado actual de la FSM
+      pir_level   => pir_level,       -- Hay presencia en este momento
+      pir_pulse   => pir_pulse,       -- Pulso de un movimiento nuevo
+      ram_rd_addr => ram_rd_addr,     -- Salida
+      ram_rd_data => ram_rd_data,     -- Entrada
+      hex0        => HEX0_D,          -- Display 0
+      hex1        => HEX1_D,          -- Display 1
+      hex2        => HEX2_D,          -- Display 2
+      hex3        => HEX3_D,          -- Display 3
+      ledg        => LEDG             -- LEDS 
     );
 
-  -- Puntos decimales apagados (activos en bajo)
-  HEX0_DP <= '1';
-  HEX1_DP <= '1';
-  HEX2_DP <= '1';
-  HEX3_DP <= '1';
+  -- PUNTOS DECIMALES 
+  HEX0_DP <= '1';   -- Punto del display 0 
+  HEX1_DP <= '1';   -- Punto del display 1 
+  HEX2_DP <= '1';   -- Punto del display 2 
+  HEX3_DP <= '1';   -- Punto del display 3 
 
 end architecture structural;
+-----------------------------------------------------------------------------------------
